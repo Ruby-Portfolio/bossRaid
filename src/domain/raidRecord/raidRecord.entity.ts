@@ -2,10 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../user/user.entity';
+import { BossRaid } from '../bossRaid/bossRaid.entity';
 
 @Entity()
 export class RaidRecord {
@@ -21,6 +24,10 @@ export class RaidRecord {
   @Column()
   endTime: Date;
 
-  @ManyToOne(() => User, (user) => user.raidRecords)
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
   user: User;
+
+  @OneToOne(() => BossRaid)
+  bossRaid: BossRaid;
 }
