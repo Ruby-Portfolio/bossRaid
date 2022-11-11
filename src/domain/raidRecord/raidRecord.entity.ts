@@ -21,8 +21,11 @@ export class RaidRecord {
   @CreateDateColumn()
   enterTime: Date;
 
-  @Column()
+  @Column({ nullable: true })
   endTime: Date;
+
+  @Column()
+  userId: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
@@ -30,4 +33,13 @@ export class RaidRecord {
 
   @OneToOne(() => BossRaid)
   bossRaid: BossRaid;
+
+  isEndState(limitTime: number): boolean {
+    if (this.endTime) {
+      return true;
+    }
+
+    const now = new Date();
+    return now.getTime() - this.enterTime.getTime() > limitTime;
+  }
 }
