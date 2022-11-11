@@ -18,6 +18,6 @@ export class RaidRecordService {
       throw new NotFoundUserException();
     }
 
-    return this.raidRecordRepository.findBy({ user });
+    return this.raidRecordRepository.findBy({ userId });
   }
 }

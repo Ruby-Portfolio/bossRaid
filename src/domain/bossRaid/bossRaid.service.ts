@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { BossRaidRepository } from './bossRaid.repository';
-import { BossRaid } from './bossRaid.entity';
 import { RaidRecordRepository } from '../raidRecord/raidRecord.repository';
 import { BossRaidState } from './bossRaid.response';
 
@@ -14,10 +13,8 @@ export class BossRaidService {
   private readonly LIMIT_TIME = 180 * 1000; // TODO - S3 에서 조회한 값을 적용해야함
 
   async getBossRaidState(): Promise<BossRaidState> {
-    const raidRecord = await this.raidRecordRepository
-      .createQueryBuilder('raidRecord')
-      .leftJoin(BossRaid, 'bossRaid', 'bossRaid.raidRecordId')
-      .getOne();
+    const raidRecord =
+      await this.raidRecordRepository.getRaidRecordByBossRaid();
 
     if (raidRecord) {
       const canEnter = raidRecord.isEndState(this.LIMIT_TIME);
