@@ -8,6 +8,6 @@ export class UserService {
   async addUser(): Promise<User> {
     const userId: number = new Date().getTime();
 
-    return this.userRepository.create({ userId });
+    return this.userRepository.save({ userId } as User);
   }
 }
