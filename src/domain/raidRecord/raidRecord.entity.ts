@@ -24,10 +24,22 @@ export class RaidRecord {
   @Column()
   endTime: Date;
 
+  @Column()
+  userId: number;
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
 
   @OneToOne(() => BossRaid)
   bossRaid: BossRaid;
+
+  isEndState(limitTime: number): boolean {
+    if (this.endTime) {
+      return true;
+    }
+
+    const now = new Date();
+    return now.getTime() - this.enterTime.getTime() > limitTime;
+  }
 }
