@@ -10,9 +10,9 @@ import * as request from 'supertest';
 import { HttpStatus } from '@nestjs/common';
 import { BossRaid } from '../../../src/domain/bossRaid/bossRaid.entity';
 import { RaidRecord } from '../../../src/domain/raidRecord/raidRecord.entity';
-import { RaidRecordModule } from '../../../src/domain/raidRecord/raidRecord.module';
 import { RaidRecordRepository } from '../../../src/domain/raidRecord/raidRecord.repository';
 import { UserErrorMessage } from '../../../src/domain/user/user.exception';
+import { BossRaidRepository } from '../../../src/domain/bossRaid/bossRaid.repository';
 
 describe('UserController', () => {
   let app: NestFastifyApplication;
@@ -37,15 +37,14 @@ describe('UserController', () => {
           logging: true,
         }),
         UserModule,
-        RaidRecordModule,
         CustomTypeOrmModule.forCustomRepository([
           UserRepository,
           RaidRecordRepository,
+          BossRaidRepository,
         ]),
       ],
     }).compile();
 
-    process.env.NODE_ENV = 'test';
     app = module.createNestApplication();
     await app.init();
 
@@ -56,6 +55,7 @@ describe('UserController', () => {
 
   describe('POST /user - 유저 생성', () => {
     beforeAll(async () => {
+      await raidRecordRepository.delete({});
       await userRepository.delete({});
     });
 
@@ -98,26 +98,30 @@ describe('UserController', () => {
         await raidRecordRepository.save({
           score,
           endTime,
-          user,
+          userId,
         });
       }
     });
 
-    test('userId 에 해당하는 유저 정보가 없을 경우 404 응답', async () => {
-      const err = await request(app.getHttpServer())
-        .get(`/user/${userId + 999}`)
-        .expect(404);
+    describe('유저 조회 실패', () => {
+      test('userId 에 해당하는 유저 정보가 없을 경우 404 응답', async () => {
+        const err = await request(app.getHttpServer())
+          .get(`/user/${userId + 999}`)
+          .expect(404);
 
-      expect(err.body.message).toEqual(UserErrorMessage.NOT_FOUND);
+        expect(err.body.message).toEqual(UserErrorMessage.NOT_FOUND);
+      });
     });
 
-    test('유저의 기록 조회', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/user/${userId}`)
-        .expect(200);
+    describe('유저 조회 성공', () => {
+      test('유저의 기록 조회', async () => {
+        const res = await request(app.getHttpServer())
+          .get(`/user/${userId}`)
+          .expect(200);
 
-      expect(res.body.totalScore).toEqual(totalScore);
-      expect(res.body.bossRaidHistory.length).toEqual(5);
+        expect(res.body.totalScore).toEqual(totalScore);
+        expect(res.body.bossRaidHistory.length).toEqual(5);
+      });
     });
   });
 });

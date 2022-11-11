@@ -24,44 +24,48 @@ describe('BossRaidService', () => {
   });
 
   describe('getBossRaidState - 보스레이드 상태 조회', () => {
-    test('진행중인 보스레이드가 제한시간을 초과하지 않았을 경우 보스레이드 시도 불가능', async () => {
-      const userId = 123;
-      const raidRecord = new RaidRecord();
-      raidRecord.userId = userId;
+    describe('보스레이드 시도 불가능', () => {
+      test('진행중인 보스레이드가 제한시간을 초과하지 않았을 경우', async () => {
+        const userId = 123;
+        const raidRecord = new RaidRecord();
+        raidRecord.userId = userId;
 
-      jest
-        .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
-        .mockResolvedValue(Promise.resolve(raidRecord));
-      jest.spyOn(raidRecord, 'isEndState').mockReturnValue(false);
+        jest
+          .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
+          .mockResolvedValue(Promise.resolve(raidRecord));
+        jest.spyOn(raidRecord, 'isEndState').mockReturnValue(false);
 
-      const bossRaidState = await bossRaidService.getBossRaidState();
-      expect(bossRaidState.canEnter).toBeFalsy();
-      expect(bossRaidState.enteredUserId).toEqual(userId);
+        const bossRaidState = await bossRaidService.getBossRaidState();
+        expect(bossRaidState.canEnter).toBeFalsy();
+        expect(bossRaidState.enteredUserId).toEqual(userId);
+      });
     });
 
-    test('진행중인 보스레이드가 제한시간을 초과했을 경우 보스레이드 시도 가능', async () => {
-      const userId = 123;
-      const raidRecord = new RaidRecord();
-      raidRecord.userId = userId;
+    describe('보스레이드 시도 가능', () => {
+      test('진행중인 보스레이드가 제한시간을 초과했을 경우 보스레이드 시도 가능', async () => {
+        const userId = 123;
+        const raidRecord = new RaidRecord();
+        raidRecord.userId = userId;
 
-      jest
-        .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
-        .mockResolvedValue(Promise.resolve(raidRecord));
-      jest.spyOn(raidRecord, 'isEndState').mockReturnValue(true);
+        jest
+          .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
+          .mockResolvedValue(Promise.resolve(raidRecord));
+        jest.spyOn(raidRecord, 'isEndState').mockReturnValue(true);
 
-      const bossRaidState = await bossRaidService.getBossRaidState();
-      expect(bossRaidState.canEnter).toBeTruthy();
-      expect(bossRaidState.enteredUserId).toEqual(null);
-    });
+        const bossRaidState = await bossRaidService.getBossRaidState();
+        expect(bossRaidState.canEnter).toBeTruthy();
+        expect(bossRaidState.enteredUserId).toEqual(null);
+      });
 
-    test('보스레이드가 진행중이 아닐 경우 보스레이드 시도 가능', async () => {
-      jest
-        .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
-        .mockResolvedValue(Promise.resolve(null));
+      test('보스레이드가 진행중이 아닐 경우 보스레이드 시도 가능', async () => {
+        jest
+          .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
+          .mockResolvedValue(Promise.resolve(null));
 
-      const bossRaidState = await bossRaidService.getBossRaidState();
-      expect(bossRaidState.canEnter).toBeTruthy();
-      expect(bossRaidState.enteredUserId).toEqual(null);
+        const bossRaidState = await bossRaidService.getBossRaidState();
+        expect(bossRaidState.canEnter).toBeTruthy();
+        expect(bossRaidState.enteredUserId).toEqual(null);
+      });
     });
   });
 });

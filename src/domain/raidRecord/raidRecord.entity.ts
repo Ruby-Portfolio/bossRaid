@@ -21,7 +21,7 @@ export class RaidRecord {
   @CreateDateColumn()
   enterTime: Date;
 
-  @Column()
+  @Column({ nullable: true })
   endTime: Date;
 
   @Column()
