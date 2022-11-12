@@ -5,7 +5,7 @@ import { BossRaidRepository } from '../../../src/domain/bossRaid/bossRaid.reposi
 import { BossRaidService } from '../../../src/domain/bossRaid/bossRaid.service';
 import { BossRaidInfo } from '../../../src/domain/bossRaid/bossRaid.request';
 import { EnterBossRaid } from '../../../src/domain/bossRaid/bossRaid.response';
-import { UpdateResult } from 'typeorm';
+import { InsertResult, UpdateResult } from 'typeorm';
 
 describe('BossRaidService', () => {
   let bossRaidRepository: BossRaidRepository;
@@ -133,6 +133,35 @@ describe('BossRaidService', () => {
         jest
           .spyOn(bossRaidRepository, 'update')
           .mockResolvedValue(Promise.resolve(new UpdateResult()));
+
+        const bossRaidInfo: BossRaidInfo = { level: 0, userId: 124 };
+        const enterBossRaid: EnterBossRaid =
+          await bossRaidService.enterBossRaid(bossRaidInfo);
+        expect(enterBossRaid.isEntered).toBeTruthy();
+        expect(enterBossRaid.raidRecordId).toEqual(newRaidRecord.raidRecordId);
+      });
+
+      test('생성된 보스레이드가 없는 경우 보스레이드 생성하여 진행', async () => {
+        const userId = 123;
+        const raidRecord = new RaidRecord();
+        raidRecord.userId = userId;
+        const newRaidRecord: RaidRecord = {
+          raidRecordId: 222,
+        } as RaidRecord;
+
+        jest
+          .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
+          .mockResolvedValue(Promise.resolve(raidRecord));
+        jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
+        jest
+          .spyOn(raidRecordRepository, 'save')
+          .mockResolvedValue(Promise.resolve(newRaidRecord));
+        jest
+          .spyOn(bossRaidRepository, 'update')
+          .mockResolvedValue(Promise.resolve(null));
+        jest
+          .spyOn(bossRaidRepository, 'insert')
+          .mockResolvedValue(Promise.resolve(new InsertResult()));
 
         const bossRaidInfo: BossRaidInfo = { level: 0, userId: 124 };
         const enterBossRaid: EnterBossRaid =
