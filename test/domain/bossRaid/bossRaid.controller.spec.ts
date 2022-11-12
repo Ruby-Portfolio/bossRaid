@@ -11,6 +11,8 @@ import { RaidRecordRepository } from '../../../src/domain/raidRecord/raidRecord.
 import { BossRaidRepository } from '../../../src/domain/bossRaid/bossRaid.repository';
 import * as request from 'supertest';
 import { BossRaidModule } from '../../../src/domain/bossRaid/bossRaid.module';
+import { testApp } from '../../testAppInit';
+import { ValidationMessage } from '../../../src/common/validation/validation.decorator';
 
 describe('BossRaidController', () => {
   let app: NestFastifyApplication;
@@ -44,7 +46,7 @@ describe('BossRaidController', () => {
       ],
     }).compile();
 
-    app = module.createNestApplication();
+    app = testApp(module);
     await app.init();
 
     userRepository = module.get<UserRepository>(UserRepository);
@@ -91,7 +93,7 @@ describe('BossRaidController', () => {
     });
 
     describe('보스레이드 시도 가능', () => {
-      describe('능', () => {
+      describe('보스레이드가 진행중인 경우', () => {
         let user: User;
         beforeAll(async () => {
           await bossRaidRepository.delete({});
@@ -123,7 +125,7 @@ describe('BossRaidController', () => {
             .expect(200);
 
           expect(bossRaidState.body.canEnter).toBeTruthy();
-          expect(bossRaidState.body.enteredUserId).toEqual(null);
+          expect(bossRaidState.body.enteredUserId).toEqual(undefined);
         });
       });
 
@@ -169,7 +171,181 @@ describe('BossRaidController', () => {
             .expect(200);
 
           expect(bossRaidState.body.canEnter).toBeTruthy();
-          expect(bossRaidState.body.enteredUserId).toEqual(null);
+          expect(bossRaidState.body.enteredUserId).toEqual(undefined);
+        });
+      });
+    });
+  });
+
+  describe('POST /bossRaid/enter - 보스레이드 시작', () => {
+    describe('보스레이드 시작 불가능', () => {
+      let newUser: User;
+      beforeAll(async () => {
+        await bossRaidRepository.delete({});
+        await raidRecordRepository.delete({});
+        await userRepository.delete({});
+
+        const user = await userRepository.save({});
+
+        const now = new Date();
+        const enterTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          now.getHours(),
+          now.getMinutes() - 2,
+        );
+
+        const raidRecord = await raidRecordRepository.save({
+          score: 100,
+          enterTime,
+          userId: user.userId,
+        });
+        await bossRaidRepository.insert({
+          raidRecord,
+        });
+
+        newUser = await userRepository.save({});
+      });
+
+      test('요청에 필요한 값이 잘못된 경우 400 응답', async () => {
+        const err = await request(app.getHttpServer())
+          .post(`/bossRaid/enter`)
+          .send({
+            userId: 0,
+            level: '레벨',
+          })
+          .expect(400);
+
+        expect(err.body.message.length).toEqual(2);
+        expect(err.body.message).toContain(ValidationMessage.INVALID_ID);
+        expect(err.body.message).toContain(ValidationMessage.INVALID_LEVEL);
+      });
+      test('다른 유저의 진행중인 보스레이드가 제한 시간을 초과하지 않은 경우 새 레이드 레코드를 생성하지 않고 200 응답', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/bossRaid/enter`)
+          .send({
+            userId: newUser.userId,
+            level: 0,
+          })
+          .expect(200);
+
+        expect(res.body.isEntered).toEqual(false);
+        expect(res.body.raidRecordId).toEqual(undefined);
+      });
+    });
+
+    describe('보스레이드 시작 가능', () => {
+      describe('보스레이드가 생성되지 않은 경우', () => {
+        let user: User;
+        let newUser: User;
+        beforeAll(async () => {
+          await bossRaidRepository.delete({});
+          await raidRecordRepository.delete({});
+          await userRepository.delete({});
+
+          user = await userRepository.save({});
+
+          newUser = await userRepository.save({});
+        });
+
+        test('새 보스레이드 및 새 레이드 레코드를 생성하여 201 응답', async () => {
+          const res = await request(app.getHttpServer())
+            .post(`/bossRaid/enter`)
+            .send({
+              userId: newUser.userId,
+              level: 0,
+            })
+            .expect(201);
+
+          const bossRaids = await bossRaidRepository.find({});
+          const raidRecord = await raidRecordRepository.find({});
+
+          expect(res.body.isEntered).toEqual(true);
+          expect(bossRaids.length).toEqual(1);
+          expect(res.body.raidRecordId).toEqual(raidRecord[0].raidRecordId);
+        });
+      });
+
+      describe('보스레이드가 생성되어 있는 경우', () => {
+        describe('다른 유저의 진행중인 보스레이드가 없는 경우', () => {
+          let user: User;
+          let newUser: User;
+          beforeAll(async () => {
+            await bossRaidRepository.delete({});
+            await raidRecordRepository.delete({});
+            await userRepository.delete({});
+
+            user = await userRepository.save({});
+
+            newUser = await userRepository.save({});
+
+            await bossRaidRepository.insert({});
+          });
+
+          test('다른 유저의 진행중인 보스레이드가 없는 경우 새 레이드 레코드를 생성하여 201 응답', async () => {
+            const res = await request(app.getHttpServer())
+              .post(`/bossRaid/enter`)
+              .send({
+                userId: newUser.userId,
+                level: 0,
+              })
+              .expect(201);
+
+            const raidRecord = await raidRecordRepository.find({});
+
+            expect(res.body.isEntered).toEqual(true);
+            expect(res.body.raidRecordId).toEqual(raidRecord[0].raidRecordId);
+          });
+        });
+
+        describe('다른 유저의 진행중인 보스레이드가 제한 시간을 초과한 경우', () => {
+          let user: User;
+          let newUser: User;
+          beforeAll(async () => {
+            await bossRaidRepository.delete({});
+            await raidRecordRepository.delete({});
+            await userRepository.delete({});
+
+            user = await userRepository.save({});
+            newUser = await userRepository.save({});
+
+            const now = new Date();
+            const enterTime = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              now.getHours(),
+              now.getMinutes() - 4,
+            );
+
+            const raidRecord = await raidRecordRepository.save({
+              score: 100,
+              enterTime,
+              userId: user.userId,
+            });
+            await bossRaidRepository.insert({
+              raidRecord,
+            });
+          });
+
+          test('다른 유저의 진행중인 보스레이드가 제한 시간을 초과한 경우 새 레이드 레코드를 생성하여 201 응답', async () => {
+            const res = await request(app.getHttpServer())
+              .post(`/bossRaid/enter`)
+              .send({
+                userId: newUser.userId,
+                level: 0,
+              })
+              .expect(201);
+
+            const raidRecords = await raidRecordRepository
+              .createQueryBuilder('raidRecord')
+              .orderBy('raidRecordId', 'DESC')
+              .getMany();
+
+            expect(res.body.isEntered).toEqual(true);
+            expect(res.body.raidRecordId).toEqual(raidRecords[0].raidRecordId);
+          });
         });
       });
     });
