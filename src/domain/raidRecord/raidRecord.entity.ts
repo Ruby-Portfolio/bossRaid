@@ -4,11 +4,9 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../user/user.entity';
-import { BossRaid } from '../bossRaid/bossRaid.entity';
 
 @Entity()
 export class RaidRecord {
@@ -31,15 +29,12 @@ export class RaidRecord {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @OneToOne(() => BossRaid)
-  bossRaid: BossRaid;
-
-  isEndState(limitTime: number): boolean {
+  isProceedingState(limitTime: number): boolean {
     if (this.endTime) {
-      return true;
+      return false;
     }
 
     const now = new Date();
-    return now.getTime() - this.enterTime.getTime() > limitTime;
+    return now.getTime() - this.enterTime.getTime() < limitTime;
   }
 }

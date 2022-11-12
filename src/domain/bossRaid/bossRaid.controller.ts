@@ -1,6 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { BossRaidService } from './bossRaid.service';
-import { BossRaidState } from './bossRaid.response';
+import { BossRaidState, EnterBossRaid } from './bossRaid.response';
+import { BossRaidInfo } from './bossRaid.request';
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -9,5 +10,12 @@ export class BossRaidController {
   @Get()
   async getBossRaid(): Promise<BossRaidState> {
     return this.bossRaidService.getBossRaidState();
+  }
+
+  @Post('enter')
+  async enterBossRaid(
+    @Body() bossRaidInfo: BossRaidInfo,
+  ): Promise<EnterBossRaid> {
+    return this.bossRaidService.enterBossRaid(bossRaidInfo);
   }
 }
