@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { BossRaidRepository } from './bossRaid.repository';
 import { RaidRecordRepository } from '../raidRecord/raidRecord.repository';
 import { BossRaidState, EnterBossRaid } from './bossRaid.response';
-import { BossRaidInfo } from './bossRaid.request';
-import { BossRaid } from './bossRaid.entity';
+import { BossRaidInfo, EndBossRaid } from './bossRaid.request';
+import { isUpdateState } from '../../common/typeorm/typeorm.function';
+import { NotFoundBossRaidException } from './bossRaid.exception';
+import { UpdateResult } from 'typeorm';
 
 @Injectable()
 export class BossRaidService {
@@ -46,10 +48,26 @@ export class BossRaidService {
       { raidRecord: newRaidRecord },
     );
 
-    if (!BossRaid.isUpdateResult(updateResult)) {
+    if (!isUpdateState(updateResult)) {
       await this.bossRaidRepository.insert({ raidRecord: newRaidRecord });
     }
 
     return new EnterBossRaid(newRaidRecord.raidRecordId);
+  }
+
+  async endBossRaid({
+    userId,
+    raidRecordId,
+  }: EndBossRaid): Promise<UpdateResult> {
+    const updateResult = await this.raidRecordRepository.update(
+      { userId, raidRecordId },
+      { endTime: new Date() },
+    );
+
+    if (!isUpdateState(updateResult)) {
+      throw new NotFoundBossRaidException();
+    }
+
+    return updateResult;
   }
 }

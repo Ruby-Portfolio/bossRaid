@@ -218,7 +218,7 @@ describe('BossRaidController', () => {
           .expect(400);
 
         expect(err.body.message.length).toEqual(2);
-        expect(err.body.message).toContain(ValidationMessage.INVALID_ID);
+        expect(err.body.message).toContain(ValidationMessage.INVALID_USER_ID);
         expect(err.body.message).toContain(ValidationMessage.INVALID_LEVEL);
       });
       test('다른 유저의 진행중인 보스레이드가 제한 시간을 초과하지 않은 경우 새 레이드 레코드를 생성하지 않고 200 응답', async () => {
