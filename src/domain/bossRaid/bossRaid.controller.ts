@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
 import { BossRaidService } from './bossRaid.service';
 import { BossRaidState, EnterBossRaid } from './bossRaid.response';
 import { BossRaidInfo } from './bossRaid.request';
@@ -15,7 +15,13 @@ export class BossRaidController {
   @Post('enter')
   async enterBossRaid(
     @Body() bossRaidInfo: BossRaidInfo,
-  ): Promise<EnterBossRaid> {
-    return this.bossRaidService.enterBossRaid(bossRaidInfo);
+    @Res() res,
+  ): Promise<void> {
+    const enterBossRaid: EnterBossRaid =
+      await this.bossRaidService.enterBossRaid(bossRaidInfo);
+    const httpStatus = enterBossRaid.isEntered
+      ? HttpStatus.CREATED
+      : HttpStatus.OK;
+    res.status(httpStatus).json(enterBossRaid);
   }
 }

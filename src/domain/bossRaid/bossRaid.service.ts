@@ -3,6 +3,7 @@ import { BossRaidRepository } from './bossRaid.repository';
 import { RaidRecordRepository } from '../raidRecord/raidRecord.repository';
 import { BossRaidState, EnterBossRaid } from './bossRaid.response';
 import { BossRaidInfo } from './bossRaid.request';
+import { BossRaid } from './bossRaid.entity';
 
 @Injectable()
 export class BossRaidService {
@@ -45,7 +46,7 @@ export class BossRaidService {
       { raidRecord: newRaidRecord },
     );
 
-    if (!updateResult) {
+    if (!BossRaid.isUpdateResult(updateResult)) {
       await this.bossRaidRepository.insert({ raidRecord: newRaidRecord });
     }
 

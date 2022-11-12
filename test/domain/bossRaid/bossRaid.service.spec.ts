@@ -97,6 +97,9 @@ describe('BossRaidService', () => {
         const newRaidRecord: RaidRecord = {
           raidRecordId: 222,
         } as RaidRecord;
+        const updateResult: UpdateResult = {
+          affected: 1,
+        } as UpdateResult;
 
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
@@ -106,7 +109,7 @@ describe('BossRaidService', () => {
           .mockResolvedValue(Promise.resolve(newRaidRecord));
         jest
           .spyOn(bossRaidRepository, 'update')
-          .mockResolvedValue(Promise.resolve(new UpdateResult()));
+          .mockResolvedValue(Promise.resolve(updateResult));
 
         const bossRaidInfo: BossRaidInfo = { level: 0, userId: 124 };
         const enterBossRaid: EnterBossRaid =
@@ -122,6 +125,9 @@ describe('BossRaidService', () => {
         const newRaidRecord: RaidRecord = {
           raidRecordId: 222,
         } as RaidRecord;
+        const updateResult: UpdateResult = {
+          affected: 1,
+        } as UpdateResult;
 
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
@@ -132,7 +138,7 @@ describe('BossRaidService', () => {
           .mockResolvedValue(Promise.resolve(newRaidRecord));
         jest
           .spyOn(bossRaidRepository, 'update')
-          .mockResolvedValue(Promise.resolve(new UpdateResult()));
+          .mockResolvedValue(Promise.resolve(updateResult));
 
         const bossRaidInfo: BossRaidInfo = { level: 0, userId: 124 };
         const enterBossRaid: EnterBossRaid =
@@ -148,6 +154,9 @@ describe('BossRaidService', () => {
         const newRaidRecord: RaidRecord = {
           raidRecordId: 222,
         } as RaidRecord;
+        const updateResult: UpdateResult = {
+          affected: 0,
+        } as UpdateResult;
 
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
@@ -158,7 +167,7 @@ describe('BossRaidService', () => {
           .mockResolvedValue(Promise.resolve(newRaidRecord));
         jest
           .spyOn(bossRaidRepository, 'update')
-          .mockResolvedValue(Promise.resolve(null));
+          .mockResolvedValue(Promise.resolve(updateResult));
         jest
           .spyOn(bossRaidRepository, 'insert')
           .mockResolvedValue(Promise.resolve(new InsertResult()));
