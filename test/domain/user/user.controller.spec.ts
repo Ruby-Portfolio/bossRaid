@@ -18,6 +18,7 @@ describe('UserController', () => {
   let app: NestFastifyApplication;
   let userRepository: UserRepository;
   let raidRecordRepository: RaidRecordRepository;
+  let bossRaidRepository: BossRaidRepository;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,10 +52,12 @@ describe('UserController', () => {
     userRepository = module.get<UserRepository>(UserRepository);
     raidRecordRepository =
       module.get<RaidRecordRepository>(RaidRecordRepository);
+    bossRaidRepository = module.get<BossRaidRepository>(BossRaidRepository);
   });
 
   describe('POST /user - 유저 생성', () => {
     beforeAll(async () => {
+      await bossRaidRepository.delete({});
       await raidRecordRepository.delete({});
       await userRepository.delete({});
     });
@@ -74,6 +77,7 @@ describe('UserController', () => {
     let userId: number;
     let totalScore = 0;
     beforeAll(async () => {
+      await bossRaidRepository.delete({});
       await raidRecordRepository.delete({});
       await userRepository.delete({});
 
@@ -104,6 +108,10 @@ describe('UserController', () => {
     });
 
     describe('유저 조회 실패', () => {
+      test('userId 값이 올바른 타입이 아닐 경우 400 응답', async () => {
+        await request(app.getHttpServer()).get(`/user/asdasd`).expect(400);
+      });
+
       test('userId 에 해당하는 유저 정보가 없을 경우 404 응답', async () => {
         const err = await request(app.getHttpServer())
           .get(`/user/${userId + 999}`)
