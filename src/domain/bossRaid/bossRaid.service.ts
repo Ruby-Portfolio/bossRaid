@@ -25,7 +25,7 @@ export class BossRaidService {
     return new BossRaidState();
   }
 
-  async enterBossRaid({ level, userId }: BossRaidInfo) {
+  async enterBossRaid({ level, userId }: BossRaidInfo): Promise<EnterBossRaid> {
     // 보스레이드 입장 가능 상태인지 확인해야함
     const raidRecord =
       await this.raidRecordRepository.getRaidRecordByBossRaid();
