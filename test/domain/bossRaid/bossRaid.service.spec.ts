@@ -6,7 +6,7 @@ import { BossRaidService } from '../../../src/domain/bossRaid/bossRaid.service';
 import { BossRaidInfo } from '../../../src/domain/bossRaid/bossRaid.request';
 import { EnterBossRaid } from '../../../src/domain/bossRaid/bossRaid.response';
 import { InsertResult, UpdateResult } from 'typeorm';
-import { BossRaidErrorMessage } from '../../../src/domain/bossRaid/bossRaid.exception';
+import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
 
 describe('BossRaidService', () => {
   let bossRaidRepository: BossRaidRepository;
@@ -195,7 +195,7 @@ describe('BossRaidService', () => {
         .mockResolvedValue(updateResult);
       await expect(
         bossRaidService.endBossRaid({ userId, raidRecordId }),
-      ).rejects.toThrowError(BossRaidErrorMessage.NOT_FOUND);
+      ).rejects.toThrowError(RaidRecordErrorMessage.NOT_FOUND);
     });
 
     test('레이드 레코드 종료시간 업데이트를 성공했을 경우', async () => {

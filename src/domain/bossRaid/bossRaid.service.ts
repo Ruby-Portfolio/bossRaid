@@ -4,7 +4,7 @@ import { RaidRecordRepository } from '../raidRecord/raidRecord.repository';
 import { BossRaidState, EnterBossRaid } from './bossRaid.response';
 import { BossRaidInfo, EndBossRaid } from './bossRaid.request';
 import { isUpdateState } from '../../common/typeorm/typeorm.function';
-import { NotFoundBossRaidException } from './bossRaid.exception';
+import { NotFoundRaidRecordException } from '../raidRecord/raidRecord.exception';
 import { UpdateResult } from 'typeorm';
 
 @Injectable()
@@ -65,7 +65,7 @@ export class BossRaidService {
     );
 
     if (!isUpdateState(updateResult)) {
-      throw new NotFoundBossRaidException();
+      throw new NotFoundRaidRecordException();
     }
 
     return updateResult;

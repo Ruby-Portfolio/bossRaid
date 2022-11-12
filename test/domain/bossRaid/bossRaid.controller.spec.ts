@@ -13,6 +13,7 @@ import * as request from 'supertest';
 import { BossRaidModule } from '../../../src/domain/bossRaid/bossRaid.module';
 import { testApp } from '../../testAppInit';
 import { ValidationMessage } from '../../../src/common/validation/validation.decorator';
+import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
 
 describe('BossRaidController', () => {
   let app: NestFastifyApplication;
@@ -347,6 +348,124 @@ describe('BossRaidController', () => {
             expect(res.body.raidRecordId).toEqual(raidRecords[0].raidRecordId);
           });
         });
+      });
+    });
+  });
+
+  describe('PATCH /bossRaid/end - 보스레이드 종료', () => {
+    describe('보스레이드 종료 실패', () => {
+      let user: User;
+      let newUser: User;
+      let raidRecord: RaidRecord;
+      beforeAll(async () => {
+        await bossRaidRepository.delete({});
+        await raidRecordRepository.delete({});
+        await userRepository.delete({});
+
+        user = await userRepository.save({});
+        newUser = await userRepository.save({});
+
+        const now = new Date();
+        const enterTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          now.getHours(),
+          now.getMinutes() - 2,
+        );
+
+        raidRecord = await raidRecordRepository.save({
+          score: 100,
+          enterTime,
+          userId: user.userId,
+        });
+        await bossRaidRepository.insert({
+          raidRecord,
+        });
+        await bossRaidRepository.insert({});
+      });
+      test('요청에 필요한 값이 잘못된 경우 400 응답', async () => {
+        const err = await request(app.getHttpServer())
+          .patch(`/bossRaid/end`)
+          .send({
+            userId: '?',
+            raidRecordId: -1,
+          })
+          .expect(400);
+
+        expect(err.body.message.length).toEqual(2);
+        expect(err.body.message).toContain(ValidationMessage.INVALID_USER_ID);
+        expect(err.body.message).toContain(
+          ValidationMessage.INVALID_RAID_RECORD_ID,
+        );
+      });
+      test('종료할 레이드 레코드가 존재하지 않을 경우 404 응답', async () => {
+        const err = await request(app.getHttpServer())
+          .patch(`/bossRaid/end`)
+          .send({
+            userId: user.userId,
+            raidRecordId: raidRecord.raidRecordId + 99,
+          })
+          .expect(404);
+
+        expect(err.body.message).toEqual(RaidRecordErrorMessage.NOT_FOUND);
+      });
+
+      test('유저에 해당하는 레이드 레코드가 존재하지 않을 경우 404 응답', async () => {
+        const err = await request(app.getHttpServer())
+          .patch(`/bossRaid/end`)
+          .send({
+            userId: newUser.userId,
+            raidRecordId: raidRecord.raidRecordId,
+          })
+          .expect(404);
+
+        expect(err.body.message).toEqual(RaidRecordErrorMessage.NOT_FOUND);
+      });
+    });
+
+    describe('보스레이드 종료 성공', () => {
+      let user: User;
+      let raidRecord: RaidRecord;
+      beforeAll(async () => {
+        await bossRaidRepository.delete({});
+        await raidRecordRepository.delete({});
+        await userRepository.delete({});
+
+        user = await userRepository.save({});
+
+        const now = new Date();
+        const enterTime = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          now.getHours(),
+          now.getMinutes() - 2,
+        );
+
+        raidRecord = await raidRecordRepository.save({
+          score: 100,
+          enterTime,
+          userId: user.userId,
+        });
+        await bossRaidRepository.insert({
+          raidRecord,
+        });
+      });
+      test('레이드 레코드에 종료 시간을 업데이트 후 200 응답', async () => {
+        await request(app.getHttpServer())
+          .patch(`/bossRaid/end`)
+          .send({
+            userId: user.userId,
+            raidRecordId: raidRecord.raidRecordId,
+          })
+          .expect(200);
+
+        const endRaidRecord = await raidRecordRepository.findOneBy({
+          raidRecordId: raidRecord.raidRecordId,
+        });
+
+        expect(endRaidRecord.endTime).toBeTruthy();
       });
     });
   });
