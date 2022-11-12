@@ -40,7 +40,14 @@ export class BossRaidService {
       userId,
     });
 
-    await this.bossRaidRepository.update({}, { raidRecord: newRaidRecord });
+    const updateResult = await this.bossRaidRepository.update(
+      {},
+      { raidRecord: newRaidRecord },
+    );
+
+    if (!updateResult) {
+      await this.bossRaidRepository.insert({ raidRecord: newRaidRecord });
+    }
 
     return new EnterBossRaid(newRaidRecord.raidRecordId);
   }
