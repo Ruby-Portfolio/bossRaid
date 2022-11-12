@@ -17,3 +17,8 @@ export class EndBossRaid {
   @IsId({ message: ValidationMessage.INVALID_RAID_RECORD_ID })
   raidRecordId: number;
 }
+
+export class GetTopRankList {
+  @IsId({ message: ValidationMessage.INVALID_USER_ID })
+  userId: number;
+}

@@ -8,16 +8,25 @@ import {
   Res,
 } from '@nestjs/common';
 import { BossRaidService } from './bossRaid.service';
-import { BossRaidState, EnterBossRaid } from './bossRaid.response';
+import { BossRaidState, EnterBossRaid, RankList } from './bossRaid.response';
 import { BossRaidInfo, EndBossRaid } from './bossRaid.request';
+import { RaidRecordService } from '../raidRecord/raidRecord.service';
 
 @Controller('bossRaid')
 export class BossRaidController {
-  constructor(private readonly bossRaidService: BossRaidService) {}
+  constructor(
+    private readonly bossRaidService: BossRaidService,
+    private readonly raidRecordService: RaidRecordService,
+  ) {}
 
   @Get()
   async getBossRaid(): Promise<BossRaidState> {
     return this.bossRaidService.getBossRaidState();
+  }
+
+  @Get('topRankerList')
+  async getBossRaidTopRankList(@Body() userId: number): Promise<RankList> {
+    return this.raidRecordService.getTopRankList(userId);
   }
 
   @Post('enter')

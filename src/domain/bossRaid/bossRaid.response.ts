@@ -17,3 +17,14 @@ export class EnterBossRaid {
   isEntered: boolean;
   raidRecordId: number | null;
 }
+
+export class RankingInfo {
+  ranking: number;
+  userId: number;
+  totalScore: number;
+}
+
+export class RankList {
+  topRankerInfoList: RankingInfo[];
+  myRankingInfo: RankingInfo;
+}
