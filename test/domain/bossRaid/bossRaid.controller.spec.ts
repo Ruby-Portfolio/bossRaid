@@ -91,7 +91,7 @@ describe('BossRaidController', () => {
     });
 
     describe('보스레이드 시도 가능', () => {
-      describe('능', () => {
+      describe('보스레이드가 진행중인 경우', () => {
         let user: User;
         beforeAll(async () => {
           await bossRaidRepository.delete({});
@@ -123,7 +123,7 @@ describe('BossRaidController', () => {
             .expect(200);
 
           expect(bossRaidState.body.canEnter).toBeTruthy();
-          expect(bossRaidState.body.enteredUserId).toEqual(null);
+          expect(bossRaidState.body.enteredUserId).toEqual(undefined);
         });
       });
 
@@ -169,7 +169,7 @@ describe('BossRaidController', () => {
             .expect(200);
 
           expect(bossRaidState.body.canEnter).toBeTruthy();
-          expect(bossRaidState.body.enteredUserId).toEqual(null);
+          expect(bossRaidState.body.enteredUserId).toEqual(undefined);
         });
       });
     });
