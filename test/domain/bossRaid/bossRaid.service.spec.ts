@@ -6,6 +6,7 @@ import { BossRaidService } from '../../../src/domain/bossRaid/bossRaid.service';
 import { BossRaidInfo } from '../../../src/domain/bossRaid/bossRaid.request';
 import { EnterBossRaid } from '../../../src/domain/bossRaid/bossRaid.response';
 import { InsertResult, UpdateResult } from 'typeorm';
+import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
 
 describe('BossRaidService', () => {
   let bossRaidRepository: BossRaidRepository;
@@ -178,6 +179,42 @@ describe('BossRaidService', () => {
         expect(enterBossRaid.isEntered).toBeTruthy();
         expect(enterBossRaid.raidRecordId).toEqual(newRaidRecord.raidRecordId);
       });
+    });
+  });
+
+  describe('endBossRaid - 보스레이드 종료', () => {
+    test('레이드 레코드 종료시간 업데이트를 실패했을 경우', async () => {
+      const userId = 123;
+      const raidRecordId = 1234;
+      const updateResult: UpdateResult = {
+        affected: 0,
+      } as UpdateResult;
+
+      jest
+        .spyOn(raidRecordRepository, 'update')
+        .mockResolvedValue(updateResult);
+      await expect(
+        bossRaidService.endBossRaid({ userId, raidRecordId }),
+      ).rejects.toThrowError(RaidRecordErrorMessage.NOT_FOUND);
+    });
+
+    test('레이드 레코드 종료시간 업데이트를 성공했을 경우', async () => {
+      const userId = 123;
+      const raidRecordId = 1234;
+      const updateResult: UpdateResult = {
+        affected: 1,
+      } as UpdateResult;
+
+      jest
+        .spyOn(raidRecordRepository, 'update')
+        .mockResolvedValue(updateResult);
+
+      const raidEnd = await bossRaidService.endBossRaid({
+        userId,
+        raidRecordId,
+      });
+
+      expect(raidEnd).toEqual(updateResult);
     });
   });
 });

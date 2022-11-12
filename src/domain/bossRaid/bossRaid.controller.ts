@@ -1,7 +1,15 @@
-import { Body, Controller, Get, HttpStatus, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Patch,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { BossRaidService } from './bossRaid.service';
 import { BossRaidState, EnterBossRaid } from './bossRaid.response';
-import { BossRaidInfo } from './bossRaid.request';
+import { BossRaidInfo, EndBossRaid } from './bossRaid.request';
 
 @Controller('bossRaid')
 export class BossRaidController {
@@ -23,5 +31,10 @@ export class BossRaidController {
       ? HttpStatus.CREATED
       : HttpStatus.OK;
     res.status(httpStatus).json(enterBossRaid);
+  }
+
+  @Patch('end')
+  async endBossRaid(@Body() endBossRaid: EndBossRaid) {
+    await this.bossRaidService.endBossRaid(endBossRaid);
   }
 }

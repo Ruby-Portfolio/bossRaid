@@ -1,7 +1,8 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
 export enum ValidationMessage {
-  INVALID_ID = 'ID 값이 올바르지 않습니다.',
+  INVALID_USER_ID = 'ID 값이 올바르지 않습니다.',
+  INVALID_RAID_RECORD_ID = 'ID 값이 올바르지 않습니다.',
   INVALID_LEVEL = 'LEVEL 값이 올바르지 않습니다.',
 }
 
