@@ -20,23 +20,37 @@ export class RaidRecordRepository extends Repository<RaidRecord> {
   }
 
   async getRankRaidRecordByUserId(userId: number): Promise<RankingInfo> {
-    return this.createQueryBuilder('rankRaidRecord')
+    const rankingInfo = await this.manager
+      .createQueryBuilder()
+      .select('rankRaidRecord.*')
       .from((subQuery) => {
         return subQuery
           .select([
             'raidRecord.userId as userId',
             'SUM(raidRecord.score) as totalScore',
-            '(rank() over (order by totalScore desc) - 1) as ranking',
+            '(rank() over (order by SUM(raidRecord.score) desc) - 1) as ranking',
           ])
           .from(RaidRecord, 'raidRecord')
           .groupBy('raidRecord.userId');
       }, 'rankRaidRecord')
       .where('rankRaidRecord.userId = :userId', { userId })
       .getRawOne();
+
+    if (!rankingInfo) {
+      return rankingInfo;
+    }
+
+    return {
+      userId: +rankingInfo.userId,
+      ranking: +rankingInfo.ranking,
+      totalScore: +rankingInfo.totalScore,
+    };
   }
 
   async getTopRankRaidRecord(): Promise<RankingInfo[]> {
-    return this.createQueryBuilder('rankRaidRecord')
+    return this.manager
+      .createQueryBuilder()
+      .select('rankRaidRecord.*')
       .from((subQuery) => {
         return subQuery
           .select([

@@ -94,6 +94,62 @@ describe('RaidRecordRepository', () => {
       expect(raidRecord.raidRecordId).toEqual(enteredRaidRecord.raidRecordId);
     });
   });
-  describe('getRankRaidRecordByUserId - 유저 id에 해당하는 순위 및 총 점수 조회', () => {});
+  describe('getRankRaidRecordByUserId - 유저 id에 해당하는 순위 및 총 점수 조회', () => {
+    let user: User;
+
+    beforeAll(async () => {
+      await bossRaidRepository.delete({});
+      await raidRecordRepository.delete({});
+      await userRepository.delete({});
+
+      user = await userRepository.save({});
+
+      const now = new Date();
+      const enterTime = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        now.getHours(),
+        now.getMinutes() - 2,
+      );
+
+      for (let i = 0; i < 5; i++) {
+        await raidRecordRepository.save({
+          score: 100,
+          enterTime,
+          endTime: new Date(),
+          user,
+        });
+      }
+
+      const otherUser = await userRepository.save({});
+      for (let i = 0; i < 5; i++) {
+        await raidRecordRepository.save({
+          score: 200,
+          enterTime,
+          endTime: new Date(),
+          user: otherUser,
+        });
+      }
+    });
+
+    test('유저 id에 해당하는 레이드 레코드가 없을 경우', async () => {
+      const rankingInfo = await raidRecordRepository.getRankRaidRecordByUserId(
+        user.userId + 99,
+      );
+
+      expect(rankingInfo).toBeFalsy();
+    });
+
+    test('유저 id에 해당하는 순위 및 총 점수 조회', async () => {
+      const rankingInfo = await raidRecordRepository.getRankRaidRecordByUserId(
+        user.userId,
+      );
+
+      expect(rankingInfo.ranking).toEqual(1);
+      expect(rankingInfo.totalScore).toEqual(500);
+      expect(rankingInfo.userId).toEqual(user.userId);
+    });
+  });
   describe('getTopRankRaidRecord - 상위 랭크 순위 목록 조회', () => {});
 });
