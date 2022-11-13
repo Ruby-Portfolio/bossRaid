@@ -6,8 +6,6 @@ import { User } from './user.entity';
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
   async addUser(): Promise<User> {
-    const userId: number = new Date().getTime();
-
-    return this.userRepository.save({ userId } as User);
+    return this.userRepository.save({});
   }
 }

@@ -81,9 +81,7 @@ describe('UserController', () => {
       await raidRecordRepository.delete({});
       await userRepository.delete({});
 
-      const user = await userRepository.save({
-        userId: new Date().getTime(),
-      } as User);
+      const user = await userRepository.save({});
       userId = user.userId;
 
       const now = new Date();
