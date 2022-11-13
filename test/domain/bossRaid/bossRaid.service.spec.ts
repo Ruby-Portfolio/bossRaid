@@ -7,15 +7,24 @@ import { BossRaidInfo } from '../../../src/domain/bossRaid/bossRaid.request';
 import { EnterBossRaid } from '../../../src/domain/bossRaid/bossRaid.response';
 import { InsertResult, UpdateResult } from 'typeorm';
 import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
+import { RaidScoreStore } from '../../../src/domain/bossRaid/bossRaid.store';
+import { HttpModule } from '@nestjs/axios';
 
 describe('BossRaidService', () => {
   let bossRaidRepository: BossRaidRepository;
   let raidRecordRepository: RaidRecordRepository;
   let bossRaidService: BossRaidService;
+  let raidScoreStore: RaidScoreStore;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BossRaidRepository, RaidRecordRepository, BossRaidService],
+      imports: [HttpModule],
+      providers: [
+        BossRaidRepository,
+        RaidRecordRepository,
+        BossRaidService,
+        RaidScoreStore,
+      ],
     }).compile();
 
     bossRaidRepository = await module.get<BossRaidRepository>(
@@ -25,6 +34,7 @@ describe('BossRaidService', () => {
       RaidRecordRepository,
     );
     bossRaidService = await module.get<BossRaidService>(BossRaidService);
+    raidScoreStore = await module.get<RaidScoreStore>(RaidScoreStore);
   });
 
   describe('getBossRaidState - 보스레이드 상태 조회', () => {
@@ -37,6 +47,9 @@ describe('BossRaidService', () => {
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
+        jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(true);
 
         const bossRaidState = await bossRaidService.getBossRaidState();
@@ -54,6 +67,9 @@ describe('BossRaidService', () => {
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
+        jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
 
         const bossRaidState = await bossRaidService.getBossRaidState();
@@ -65,6 +81,9 @@ describe('BossRaidService', () => {
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(null));
+        jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
 
         const bossRaidState = await bossRaidService.getBossRaidState();
         expect(bossRaidState.canEnter).toBeTruthy();
@@ -83,6 +102,9 @@ describe('BossRaidService', () => {
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
+        jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(true);
 
         const bossRaidInfo: BossRaidInfo = { level: 0, userId: 124 };
@@ -105,6 +127,12 @@ describe('BossRaidService', () => {
         jest
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(null));
+        jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
+        jest
+          .spyOn(raidScoreStore, 'getScore')
+          .mockReturnValue(Promise.resolve(100));
         jest
           .spyOn(raidRecordRepository, 'save')
           .mockResolvedValue(Promise.resolve(newRaidRecord));
@@ -135,6 +163,12 @@ describe('BossRaidService', () => {
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
         jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
+        jest
+          .spyOn(raidScoreStore, 'getScore')
+          .mockReturnValue(Promise.resolve(100));
+        jest
           .spyOn(raidRecordRepository, 'save')
           .mockResolvedValue(Promise.resolve(newRaidRecord));
         jest
@@ -163,6 +197,12 @@ describe('BossRaidService', () => {
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
+        jest
+          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .mockReturnValue(Promise.resolve(1000));
+        jest
+          .spyOn(raidScoreStore, 'getScore')
+          .mockReturnValue(Promise.resolve(100));
         jest
           .spyOn(raidRecordRepository, 'save')
           .mockResolvedValue(Promise.resolve(newRaidRecord));

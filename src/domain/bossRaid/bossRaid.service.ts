@@ -6,22 +6,22 @@ import { BossRaidInfo, EndBossRaid } from './bossRaid.request';
 import { isUpdateState } from '../../common/typeorm/typeorm.function';
 import { NotFoundRaidRecordException } from '../raidRecord/raidRecord.exception';
 import { UpdateResult } from 'typeorm';
+import { RaidScoreStore } from './bossRaid.store';
 
 @Injectable()
 export class BossRaidService {
   constructor(
     private readonly bossRaidRepository: BossRaidRepository,
     private readonly raidRecordRepository: RaidRecordRepository,
+    private readonly raidScoreStore: RaidScoreStore,
   ) {}
-
-  private readonly LIMIT_TIME = 180 * 1000; // TODO - S3 에서 조회한 값을 적용해야함
-  private readonly scores = [20, 47, 85];
 
   async getBossRaidState(): Promise<BossRaidState> {
     const raidRecord =
       await this.raidRecordRepository.getRaidRecordByBossRaid();
+    const limitTime = await this.raidScoreStore.getLimitSeconds();
 
-    if (raidRecord?.isProceedingState(this.LIMIT_TIME)) {
+    if (raidRecord?.isProceedingState(limitTime)) {
       return new BossRaidState(raidRecord.userId);
     }
 
@@ -29,17 +29,17 @@ export class BossRaidService {
   }
 
   async enterBossRaid({ level, userId }: BossRaidInfo): Promise<EnterBossRaid> {
-    // 보스레이드 입장 가능 상태인지 확인해야함
     const raidRecord =
       await this.raidRecordRepository.getRaidRecordByBossRaid();
+    const limitTime = await this.raidScoreStore.getLimitSeconds();
 
-    if (raidRecord?.isProceedingState(this.LIMIT_TIME)) {
+    if (raidRecord?.isProceedingState(limitTime)) {
       return new EnterBossRaid();
     }
 
-    // TODO - 레벨별 점수를 S3 에서 조회해야함
+    const score = await this.raidScoreStore.getScore(level);
     const newRaidRecord = await this.raidRecordRepository.save({
-      score: this.scores[level],
+      score,
       userId,
     });
 

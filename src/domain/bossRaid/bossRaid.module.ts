@@ -6,6 +6,8 @@ import { BossRaidController } from './bossRaid.controller';
 import { RaidRecordRepository } from '../raidRecord/raidRecord.repository';
 import { RaidRecordService } from '../raidRecord/raidRecord.service';
 import { UserRepository } from '../user/user.repository';
+import { HttpModule } from '@nestjs/axios';
+import { RaidScoreStore } from './bossRaid.store';
 
 @Module({
   imports: [
@@ -14,8 +16,9 @@ import { UserRepository } from '../user/user.repository';
       RaidRecordRepository,
       UserRepository,
     ]),
+    HttpModule,
   ],
-  providers: [BossRaidService, RaidRecordService],
+  providers: [BossRaidService, RaidRecordService, RaidScoreStore],
   controllers: [BossRaidController],
 })
 export class BossRaidModule {}
