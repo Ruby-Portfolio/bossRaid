@@ -3,7 +3,7 @@ import { RaidRecord } from '../raidRecord/raidRecord.entity';
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn({ type: 'bigint' })
+  @PrimaryGeneratedColumn()
   userId: number;
 
   @OneToMany(() => RaidRecord, (raidRecord) => raidRecord.user)
