@@ -6,13 +6,18 @@ import { RankingInfo } from '../bossRaid/bossRaid.response';
 
 @CustomRepository(RaidRecord)
 export class RaidRecordRepository extends Repository<RaidRecord> {
+  private readonly TOP_RANK: number = 10;
+
   async getRaidRecordByBossRaid(): Promise<RaidRecord> {
     return this.createQueryBuilder('raidRecord')
-      .leftJoin(BossRaid, 'bossRaid', 'bossRaid.raidRecordId')
+      .leftJoin(
+        BossRaid,
+        'bossRaid',
+        'bossRaid.raidRecordId = raidRecord.raidRecordId',
+      )
+      .where('bossRaid.bossRaidId is NOT NULL')
       .getOne();
   }
-
-  private readonly TOP_RANK: number = 10;
 
   async getRankRaidRecordByUserId(userId: number): Promise<RankingInfo> {
     return this.createQueryBuilder('rankRaidRecord')
