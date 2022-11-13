@@ -64,7 +64,6 @@ describe('RaidRecordRepository', () => {
       await userRepository.delete({});
 
       user = await userRepository.save({});
-
       const now = new Date();
       const enterTime = new Date(
         now.getFullYear(),
@@ -151,5 +150,61 @@ describe('RaidRecordRepository', () => {
       expect(rankingInfo.userId).toEqual(user.userId);
     });
   });
-  describe('getTopRankRaidRecord - 상위 랭크 순위 목록 조회', () => {});
+
+  describe('getTopRankRaidRecord - 상위 랭크 순위 목록 조회', () => {
+    beforeAll(async () => {
+      await bossRaidRepository.delete({});
+      await raidRecordRepository.delete({});
+      await userRepository.delete({});
+
+      const now = new Date();
+      const enterTime = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        now.getHours(),
+        now.getMinutes() - 2,
+      );
+
+      for (let i = 0; i < 15; i++) {
+        const user = await userRepository.save({});
+        for (let j = 0; j < 10; j++) {
+          await raidRecordRepository.save({
+            score: i * j * 100,
+            enterTime,
+            endTime: new Date(),
+            user,
+          });
+        }
+      }
+    });
+
+    test('topRank 기록 목록 조회', async () => {
+      const topRankingInfos = await raidRecordRepository.getTopRankRaidRecord();
+
+      console.log(topRankingInfos);
+
+      expect(
+        topRankingInfos.every((rankingInfo) => {
+          return rankingInfo.ranking < 10;
+        }),
+      ).toBeTruthy();
+      expect(
+        topRankingInfos.every((rankingInfo, idx) => {
+          if (++idx === topRankingInfos.length) {
+            return true;
+          }
+          return rankingInfo.ranking <= topRankingInfos[idx].ranking;
+        }),
+      ).toBeTruthy();
+      expect(
+        topRankingInfos.every((rankingInfo, idx) => {
+          if (++idx === topRankingInfos.length) {
+            return true;
+          }
+          return rankingInfo.totalScore >= topRankingInfos[idx].totalScore;
+        }),
+      ).toBeTruthy();
+    });
+  });
 });

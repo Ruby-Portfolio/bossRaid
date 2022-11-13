@@ -48,7 +48,7 @@ export class RaidRecordRepository extends Repository<RaidRecord> {
   }
 
   async getTopRankRaidRecord(): Promise<RankingInfo[]> {
-    return this.manager
+    const rankingInfos = await this.manager
       .createQueryBuilder()
       .select('rankRaidRecord.*')
       .from((subQuery) => {
@@ -56,12 +56,20 @@ export class RaidRecordRepository extends Repository<RaidRecord> {
           .select([
             'raidRecord.userId as userId',
             'SUM(raidRecord.score) as totalScore',
-            '(rank() over (order by totalScore desc) - 1) as ranking',
+            '(rank() over (order by SUM(raidRecord.score) desc) - 1) as ranking',
           ])
           .from(RaidRecord, 'raidRecord')
           .groupBy('raidRecord.userId');
       }, 'rankRaidRecord')
       .where('rankRaidRecord.ranking < :topRank', { topRank: this.TOP_RANK })
       .getRawMany();
+
+    return rankingInfos.map((rankingInfo) => {
+      return {
+        userId: +rankingInfo.userId,
+        ranking: +rankingInfo.ranking,
+        totalScore: +rankingInfo.totalScore,
+      };
+    });
   }
 }
