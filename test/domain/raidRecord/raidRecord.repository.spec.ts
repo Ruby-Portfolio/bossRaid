@@ -182,8 +182,6 @@ describe('RaidRecordRepository', () => {
     test('topRank 기록 목록 조회', async () => {
       const topRankingInfos = await raidRecordRepository.getTopRankRaidRecord();
 
-      console.log(topRankingInfos);
-
       expect(
         topRankingInfos.every((rankingInfo) => {
           return rankingInfo.ranking < 10;

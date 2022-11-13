@@ -5,6 +5,7 @@ import { NotFoundUserException } from '../user/user.exception';
 import { UserRepository } from '../user/user.repository';
 import { RankingInfo, RankList } from '../bossRaid/bossRaid.response';
 import { User } from '../user/user.entity';
+import { GetTopRankList } from '../bossRaid/bossRaid.request';
 
 @Injectable()
 export class RaidRecordService {
@@ -23,7 +24,7 @@ export class RaidRecordService {
     return this.raidRecordRepository.findBy({ userId });
   }
 
-  async getTopRankList(userId: number): Promise<RankList> {
+  async getTopRankList({ userId }: GetTopRankList): Promise<RankList> {
     const myRankingInfo: RankingInfo =
       await this.raidRecordRepository.getRankRaidRecordByUserId(userId);
 

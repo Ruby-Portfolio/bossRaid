@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { BossRaidService } from './bossRaid.service';
 import { BossRaidState, EnterBossRaid, RankList } from './bossRaid.response';
-import { BossRaidInfo, EndBossRaid } from './bossRaid.request';
+import { BossRaidInfo, EndBossRaid, GetTopRankList } from './bossRaid.request';
 import { RaidRecordService } from '../raidRecord/raidRecord.service';
 
 @Controller('bossRaid')
@@ -25,8 +25,10 @@ export class BossRaidController {
   }
 
   @Get('topRankerList')
-  async getBossRaidTopRankList(@Body() userId: number): Promise<RankList> {
-    return this.raidRecordService.getTopRankList(userId);
+  async getBossRaidTopRankList(
+    @Body() getTopRankList: GetTopRankList,
+  ): Promise<RankList> {
+    return this.raidRecordService.getTopRankList(getTopRankList);
   }
 
   @Post('enter')

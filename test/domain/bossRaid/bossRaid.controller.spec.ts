@@ -14,6 +14,7 @@ import { BossRaidModule } from '../../../src/domain/bossRaid/bossRaid.module';
 import { testApp } from '../../testAppInit';
 import { ValidationMessage } from '../../../src/common/validation/validation.decorator';
 import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
+import { RankingInfo } from '../../../src/domain/bossRaid/bossRaid.response';
 
 describe('BossRaidController', () => {
   let app: NestFastifyApplication;
@@ -466,6 +467,89 @@ describe('BossRaidController', () => {
         });
 
         expect(endRaidRecord.endTime).toBeTruthy();
+      });
+    });
+  });
+
+  describe('GET /bossRaid/topRankerList - 보스레이드 랭킹 조회', () => {
+    let user: User;
+    beforeAll(async () => {
+      await bossRaidRepository.delete({});
+      await raidRecordRepository.delete({});
+      await userRepository.delete({});
+
+      const now = new Date();
+      const enterTime = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        now.getHours(),
+        now.getMinutes() - 2,
+      );
+
+      for (let i = 0; i < 15; i++) {
+        const otherUser = await userRepository.save({});
+        if (i === 10) {
+          user = otherUser;
+        }
+        for (let j = 0; j < 10; j++) {
+          await raidRecordRepository.save({
+            score: i * j * 100,
+            enterTime,
+            endTime: new Date(),
+            user: otherUser,
+          });
+        }
+      }
+    });
+
+    describe('랭킹 조회 실패', () => {
+      test('요청에 필요한 값이 잘못된 경우 400 응답', async () => {
+        const err = await request(app.getHttpServer())
+          .get(`/bossRaid/topRankerList`)
+          .send({
+            userId: 0,
+          })
+          .expect(400);
+
+        expect(err.body.message[0]).toEqual(ValidationMessage.INVALID_USER_ID);
+      });
+    });
+
+    describe('랭킹 조회 성공', () => {
+      test('유저의 개인 기록 및 topRank 기록 목록 조회 성공시 200 응답', async () => {
+        const res = await request(app.getHttpServer())
+          .get(`/bossRaid/topRankerList`)
+          .send({
+            userId: user.userId,
+          })
+          .expect(200);
+
+        const myRankingInfo: RankingInfo = res.body.myRankingInfo;
+        const topRankerInfoList: RankingInfo[] = res.body.topRankerInfoList;
+
+        expect(myRankingInfo.ranking).toEqual(4);
+        expect(
+          topRankerInfoList.every((rankingInfo) => {
+            return rankingInfo.ranking < 10;
+          }),
+        ).toBeTruthy();
+        expect(
+          topRankerInfoList.every((rankingInfo, idx) => {
+            if (++idx === topRankerInfoList.length) {
+              return true;
+            }
+            return rankingInfo.ranking <= topRankerInfoList[idx].ranking;
+          }),
+        ).toBeTruthy();
+        expect(
+          topRankerInfoList.every((rankingInfo, idx) => {
+            if (++idx === topRankerInfoList.length) {
+              return true;
+            }
+            return rankingInfo.totalScore >= topRankerInfoList[idx].totalScore;
+          }),
+        ).toBeTruthy();
       });
     });
   });
