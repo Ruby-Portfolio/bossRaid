@@ -1,6 +1,64 @@
-## 프로젝트 시작 전 설정사항
-- .gitignore 에 .env, docker-compose.yml 추가
-- .env 환경변수 설정
-- docker-compose.yml 설정
-- package.json 파일 내의 name 프로퍼티 변경
-- package-lock.json 파일 내의 name, packages.name 프로퍼티 변경
+# 요구사항 분석
+
+## 유저
+<details>
+<summary>유저 생성</summary>
+
+- 유저 생성시 아무 값도 받지 않음
+- 유저는 따로 가입절차를 밟지 않고 레이드 시작 전에 중복되지 않는 userId를 발급받음
+    - 유저 생성 간소화
+    - 다른 사용자가 생성한 Id를 사용하면 안되므로 id를 단순한 인덱스가 아닌 값을 생성하여 제공
+        - 생성시점의 Date 의 millisecond 값을 반환
+</details>
+
+<details>
+<summary>유저 조회 (해당 사용자의 레이드 기록 조회)</summary>
+
+- 해당 사용자의 totalScore 와 레이드 기록들을 반환
+  - totalScore 는 레이드 기록들의 score 총합
+</details>
+
+## 보스 레이드
+<details>
+<summary>레이드 상태 조회</summary>
+
+- 진행중인 레이드 레코드가 있는지 확인한다.
+  - 레이드를 시작할 수 있는 경우
+    - 진행중인 레코드가 없는 경우
+    - 연결된 레코드의 종료시간이 있는 경우 (레이드가 종료되어 있음)
+    - 요청 시점이 연결된 레코드의 시작시점 + 레이드 제한 시간 이후인 경우
+      - 이전 레이드가 제한시간을 초과되어 종료된 상태
+- 입장 가능 상태와 레이드 진행중인 유저의 userId 를 반환
+  - 입장 가능 상태인 경우 userId 의 값은 null
+</details>
+
+<details>
+<summary>레이드 시작</summary>
+
+- 레이드를 시도하는 유저의 userId 와 레벨을 입력받아 레이드 시작을 요청
+- 레이드를 시작할 수 있다면 새 레코드를 생성하고 입장 가능 상태와 해당 레코드 id 값을 반환한다.
+    - 레코드 생성시 레벨에 해당하는 점수를 레코드에 기록해둔다.
+- 응답 값으로 입장 가능 상태와 raidRecordId 를 발급받는다.
+- 레이드는 레벨에 상관없이 오직 하나의 유저만 진행 가능
+    - 레이드가 진행중이면 다른 레벨이라도 새로 진행할 수 없으며 진행중인 레이드가 끝날 때까지 대기
+</details>
+
+<details>
+<summary>레이드 종료</summary>
+
+- 레이드에 성공했다면 레이드를 종료 처리함
+  - 요청시 레이드를 수행한 userId 와 raidRecordId 를 서버에 전달
+    - 요청한 시간과 시작시간, 레이드 수행 시간을 통해 성공 / 실패를 판별한다.
+      - 성공한 경우 레코드에 레이드 종료 시간을 기록한다.
+      - 실패한 경우 해당 기록을 제거한다.
+
+</details>
+
+## 랭킹 조회
+<details>
+<summary>랭킹 조회</summary>
+
+- 랭킹 조회시 userId 를 받음
+- 응답 값으로 탑 랭커 기록들과 userId 의 개인 기록을 받아옴
+    - 랭크(순위) 기준은 totalScore 을 기준으로 함
+</details>
