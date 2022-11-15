@@ -27,7 +27,7 @@ export class RaidScoreStore {
     this.raidScore = data?.bossRaids[0];
   }
 
-  async getLimitSeconds() {
+  async getLimitTime() {
     if (!this.raidScore) {
       await this.cachingRaidScore();
     }
@@ -44,5 +44,11 @@ export class RaidScoreStore {
       (item) => item.level === level,
     );
     return levelAndScore.score;
+  }
+
+  async isRaidClear(enterTime: Date, endTime: Date) {
+    const LimitSeconds = await this.getLimitTime();
+
+    return endTime.getTime() - enterTime.getTime() <= LimitSeconds;
   }
 }
