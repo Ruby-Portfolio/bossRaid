@@ -4,17 +4,24 @@ import { RaidRecord } from '../../../src/domain/raidRecord/raidRecord.entity';
 import { BossRaidRepository } from '../../../src/domain/bossRaid/bossRaid.repository';
 import { BossRaidService } from '../../../src/domain/bossRaid/bossRaid.service';
 import { BossRaidInfo } from '../../../src/domain/bossRaid/bossRaid.request';
-import { EnterBossRaid } from '../../../src/domain/bossRaid/bossRaid.response';
+import {
+  EnterBossRaid,
+  RankingInfo,
+} from '../../../src/domain/bossRaid/bossRaid.response';
 import { InsertResult, UpdateResult } from 'typeorm';
 import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
 import { RaidScoreStore } from '../../../src/domain/bossRaid/bossRaid.store';
 import { HttpModule } from '@nestjs/axios';
+import { CACHE_MANAGER } from '@nestjs/common';
+import { Cache } from 'cache-manager';
+import { BossRaidErrorMessage } from '../../../src/domain/bossRaid/bossRaid.exception';
 
 describe('BossRaidService', () => {
   let bossRaidRepository: BossRaidRepository;
   let raidRecordRepository: RaidRecordRepository;
   let bossRaidService: BossRaidService;
   let raidScoreStore: RaidScoreStore;
+  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -24,6 +31,13 @@ describe('BossRaidService', () => {
         RaidRecordRepository,
         BossRaidService,
         RaidScoreStore,
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -35,6 +49,7 @@ describe('BossRaidService', () => {
     );
     bossRaidService = await module.get<BossRaidService>(BossRaidService);
     raidScoreStore = await module.get<RaidScoreStore>(RaidScoreStore);
+    cacheManager = await module.get<Cache>(CACHE_MANAGER);
   });
 
   describe('getBossRaidState - 보스레이드 상태 조회', () => {
@@ -48,7 +63,7 @@ describe('BossRaidService', () => {
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(true);
 
@@ -68,7 +83,7 @@ describe('BossRaidService', () => {
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
 
@@ -82,7 +97,7 @@ describe('BossRaidService', () => {
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(null));
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
 
         const bossRaidState = await bossRaidService.getBossRaidState();
@@ -103,7 +118,7 @@ describe('BossRaidService', () => {
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(true);
 
@@ -128,7 +143,7 @@ describe('BossRaidService', () => {
           .spyOn(raidRecordRepository, 'getRaidRecordByBossRaid')
           .mockResolvedValue(Promise.resolve(null));
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
         jest
           .spyOn(raidScoreStore, 'getScore')
@@ -163,7 +178,7 @@ describe('BossRaidService', () => {
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
         jest
           .spyOn(raidScoreStore, 'getScore')
@@ -198,7 +213,7 @@ describe('BossRaidService', () => {
           .mockResolvedValue(Promise.resolve(raidRecord));
         jest.spyOn(raidRecord, 'isProceedingState').mockReturnValue(false);
         jest
-          .spyOn(raidScoreStore, 'getLimitSeconds')
+          .spyOn(raidScoreStore, 'getLimitTime')
           .mockReturnValue(Promise.resolve(1000));
         jest
           .spyOn(raidScoreStore, 'getScore')
@@ -223,19 +238,32 @@ describe('BossRaidService', () => {
   });
 
   describe('endBossRaid - 보스레이드 종료', () => {
-    test('레이드 레코드 종료시간 업데이트를 실패했을 경우', async () => {
+    test('유저 id와 레이드 레코드 id에 해당하는 레코드가 존재하지 않을 경우 NotFoundRaidRecordException 예외 처리', async () => {
       const userId = 123;
       const raidRecordId = 1234;
-      const updateResult: UpdateResult = {
-        affected: 0,
-      } as UpdateResult;
 
       jest
-        .spyOn(raidRecordRepository, 'update')
-        .mockResolvedValue(updateResult);
+        .spyOn(raidRecordRepository, 'findOneBy')
+        .mockReturnValue(Promise.resolve(null));
       await expect(
         bossRaidService.endBossRaid({ userId, raidRecordId }),
       ).rejects.toThrowError(RaidRecordErrorMessage.NOT_FOUND);
+    });
+
+    test('레이드 제한시간을 초과했을 경우 FailBossRaidException 예외 처리', async () => {
+      const userId = 123;
+      const raidRecordId = 1234;
+
+      jest
+        .spyOn(raidRecordRepository, 'findOneBy')
+        .mockReturnValue(Promise.resolve(new RaidRecord()));
+      jest
+        .spyOn(raidScoreStore, 'isRaidClear')
+        .mockReturnValue(Promise.resolve(false));
+
+      await expect(
+        bossRaidService.endBossRaid({ userId, raidRecordId }),
+      ).rejects.toThrowError(BossRaidErrorMessage.FAIL_RAID);
     });
 
     test('레이드 레코드 종료시간 업데이트를 성공했을 경우', async () => {
@@ -246,8 +274,20 @@ describe('BossRaidService', () => {
       } as UpdateResult;
 
       jest
+        .spyOn(raidRecordRepository, 'findOneBy')
+        .mockReturnValue(Promise.resolve(new RaidRecord()));
+      jest
+        .spyOn(raidScoreStore, 'isRaidClear')
+        .mockReturnValue(Promise.resolve(true));
+      jest
         .spyOn(raidRecordRepository, 'update')
         .mockResolvedValue(updateResult);
+      jest
+        .spyOn(raidRecordRepository, 'getRankRaidRecordByUserId')
+        .mockReturnValue(Promise.resolve(new RankingInfo()));
+      jest
+        .spyOn(raidRecordRepository, 'getTopRankRaidRecord')
+        .mockReturnValue(Promise.resolve([]));
 
       const raidEnd = await bossRaidService.endBossRaid({
         userId,

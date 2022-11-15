@@ -15,6 +15,8 @@ import { testApp } from '../../testAppInit';
 import { ValidationMessage } from '../../../src/common/validation/validation.decorator';
 import { RaidRecordErrorMessage } from '../../../src/domain/raidRecord/raidRecord.exception';
 import { RankingInfo } from '../../../src/domain/bossRaid/bossRaid.response';
+import { CacheModule } from '@nestjs/common';
+import * as redisStore from 'cache-manager-ioredis';
 
 describe('BossRaidController', () => {
   let app: NestFastifyApplication;
@@ -38,6 +40,13 @@ describe('BossRaidController', () => {
           entities: [User, BossRaid, RaidRecord],
           synchronize: true,
           logging: true,
+        }),
+        CacheModule.register({
+          store: redisStore,
+          host: process.env.REDIS_HOST,
+          port: process.env.REDIS_PORT,
+          ttl: +process.env.REDIS_TTL,
+          isGlobal: true,
         }),
         BossRaidModule,
         CustomTypeOrmModule.forCustomRepository([

@@ -7,12 +7,13 @@ import { UserModule } from '../../../src/domain/user/user.module';
 import { User } from '../../../src/domain/user/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as request from 'supertest';
-import { HttpStatus } from '@nestjs/common';
+import { CacheModule, HttpStatus } from '@nestjs/common';
 import { BossRaid } from '../../../src/domain/bossRaid/bossRaid.entity';
 import { RaidRecord } from '../../../src/domain/raidRecord/raidRecord.entity';
 import { RaidRecordRepository } from '../../../src/domain/raidRecord/raidRecord.repository';
 import { UserErrorMessage } from '../../../src/domain/user/user.exception';
 import { BossRaidRepository } from '../../../src/domain/bossRaid/bossRaid.repository';
+import * as redisStore from 'cache-manager-ioredis';
 
 describe('UserController', () => {
   let app: NestFastifyApplication;
@@ -36,6 +37,13 @@ describe('UserController', () => {
           entities: [User, BossRaid, RaidRecord],
           synchronize: true,
           logging: true,
+        }),
+        CacheModule.register({
+          store: redisStore,
+          host: process.env.REDIS_HOST,
+          port: process.env.REDIS_PORT,
+          ttl: +process.env.REDIS_TTL,
+          isGlobal: true,
         }),
         UserModule,
         CustomTypeOrmModule.forCustomRepository([
