@@ -5,15 +5,29 @@ import { RaidRecordService } from '../../../src/domain/raidRecord/raidRecord.ser
 import { UserErrorMessage } from '../../../src/domain/user/user.exception';
 import { User } from '../../../src/domain/user/user.entity';
 import { RaidRecord } from '../../../src/domain/raidRecord/raidRecord.entity';
+import { CACHE_MANAGER } from '@nestjs/common';
+import { Cache } from 'cache-manager';
 
 describe('RaidRecordService', () => {
   let userRepository: UserRepository;
   let raidRecordRepository: RaidRecordRepository;
   let raidRecordService: RaidRecordService;
+  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UserRepository, RaidRecordRepository, RaidRecordService],
+      providers: [
+        UserRepository,
+        RaidRecordRepository,
+        RaidRecordService,
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     userRepository = await module.get<UserRepository>(UserRepository);
@@ -21,6 +35,7 @@ describe('RaidRecordService', () => {
       RaidRecordRepository,
     );
     raidRecordService = await module.get<RaidRecordService>(RaidRecordService);
+    cacheManager = await module.get<Cache>(CACHE_MANAGER);
   });
 
   describe('getRaidRecordByUser - 유저의 레이드 기록 조회', () => {

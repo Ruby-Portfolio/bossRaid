@@ -31,6 +31,7 @@ export class RaidRecordRepository extends Repository<RaidRecord> {
             '(rank() over (order by SUM(raidRecord.score) desc) - 1) as ranking',
           ])
           .from(RaidRecord, 'raidRecord')
+          .where('raidRecord.endTime is NOT NULL')
           .groupBy('raidRecord.userId');
       }, 'rankRaidRecord')
       .where('rankRaidRecord.userId = :userId', { userId })
@@ -59,6 +60,7 @@ export class RaidRecordRepository extends Repository<RaidRecord> {
             '(rank() over (order by SUM(raidRecord.score) desc) - 1) as ranking',
           ])
           .from(RaidRecord, 'raidRecord')
+          .where('raidRecord.endTime is NOT NULL')
           .groupBy('raidRecord.userId');
       }, 'rankRaidRecord')
       .where('rankRaidRecord.ranking < :topRank', { topRank: this.TOP_RANK })
