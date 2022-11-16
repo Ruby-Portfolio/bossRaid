@@ -1,13 +1,13 @@
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+:sectlinks:
+
 == 개요
 
 * 보스레이드를 통한 랭킹 시스템 구현
-
-== 목차
-
-* <<요구사항 분석,요구사항 분석>>
-* <<테이블 설계,테이블 설계>>
-* <<API,API>>
-* <<테스트 코드 및 결과,테스트>>
 
 == 요구사항 분석
 
@@ -76,10 +76,10 @@ image:img.png[img.png]
 |status : 200 +
 totalScore : 레이드 총 점수 +
 bossRaidHistory : { +
-raidRecordId : 레이드 레코드 ID + 
+raidRecordId : 레이드 레코드 ID +
 score : 레이드 레코드 점수 +
 enterTime : 보스레이드 입장시간 +
-endTime : 보스레이드 종료시간 + 
+endTime : 보스레이드 종료시간 +
 } []
 
 |===
@@ -140,5 +140,5 @@ topRankerInfoList : 탑랭크 목록
 
 |===
 
-== 테스트 코드 및 결과
+== 테스트
 image:img_1.png[img_1.png]
