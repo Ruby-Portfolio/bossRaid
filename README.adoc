@@ -141,14 +141,11 @@ topRankerInfoList : 탑랭크 목록
 |===
 
 == 테스트
-=== 유저
-* https://github.com/MisterRuby/bossRaid/tree/develop/test/domain/user
 
-=== 보스레이드
-* https://github.com/MisterRuby/bossRaid/tree/develop/test/domain/bossRaid
-
-=== 랭킹 조회
-* https://github.com/MisterRuby/bossRaid/tree/develop/test/domain/raidRecord
+=== 테스트 코드
+* link:https://github.com/MisterRuby/bossRaid/tree/develop/test/domain/user[유저]
+* link:https://github.com/MisterRuby/bossRaid/tree/develop/test/domain/bossRaid[보스레이드]
+* link:https://github.com/MisterRuby/bossRaid/tree/develop/test/domain/raidRecord[랭킹 조회]
 
 === 테스트 전체 실행 결과
 image:img_1.png[img_1.png]
